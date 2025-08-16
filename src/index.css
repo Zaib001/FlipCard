@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme tokens via CSS vars */
+:root {
+  --bg: 10 10 14;
+  --card: 22 22 30;
+  --text: 234 234 244;
+  --accent: 99 102 241; /* indigo-500 */
+}
+
+[data-theme="light"]{
+  --bg: 245 246 250;
+  --card: 255 255 255;
+  --text: 20 24 30;
+  --accent: 79 70 229;
+}
+
+/* Neon skins you can toggle at runtime */
+[data-skin="neon-green"]{ --accent: 16 185 129; }
+[data-skin="neon-pink"]{ --accent: 236 72 153; }
+[data-skin="neon-cyan"]{ --accent: 6 182 212; }
+
+html, body, #root { height: 100%; }
+body { @apply bg-brand-bg text-brand-text selection:bg-brand-accent/30; }
