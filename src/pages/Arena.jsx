@@ -7,6 +7,7 @@ import TurnOrderBar from "../components/combat/TurnOrderBar";
 import SkillButton from "../components/combat/SkillButton";
 import ClashVisualizer from "../components/combat/ClashVisualizer";
 import { fadeIn, staggerContainer } from "../animations/motion";
+import AddCharacterModal from "../components/characters/AddCharacterModal";
 
 export default function Arena() {
   const {
@@ -25,7 +26,7 @@ export default function Arena() {
   const [defenderSkill, setDefenderSkill] = useState(null);
   const [flipping, setFlipping] = useState(false);
   const [showTurnOrder, setShowTurnOrder] = useState(false);
-
+  const [showCreate, setShowCreate] = useState(false);
   // ---------- helpers ----------
   const idOf = (obj) => obj?._id ?? obj?.id ?? null;
 
@@ -217,6 +218,16 @@ export default function Arena() {
               >
                 Resolve Clash
               </motion.button>
+              <motion.button
+                whileHover={{ scale: canResolve ? 1.05 : 1 }}
+                whileTap={{ scale: canResolve ? 0.95 : 1 }}
+                onClick={() => setShowCreate(true)}
+                className="rounded-lg px-4 py-2 bg-white/5 border border-white/10 hover:border-brand-accent/60 backdrop-blur-sm transition-all"
+
+              >
+                + New Character
+              </motion.button>
+
             </div>
           </div>
 
@@ -334,7 +345,32 @@ export default function Arena() {
           </div>
         </motion.div>
       </div>
+      {/* {showCreate && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 backdrop-blur">
+          <div className="w-full max-w-3xl rounded-xl border border-white/10 bg-brand-card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xl font-semibold">Create Character</h2>
+              <button
+                onClick={() => setShowCreate(false)}
+                className="rounded-md border border-white/10 px-3 py-1 hover:border-white/30"
+              >
+                Close
+              </button>
+            </div>
+          
 
+
+          </div>
+        </div>
+      )} */}
+  <AddCharacterModal
+              open={showCreate}
+              onClose={() => setShowCreate(false)}
+              onCreated={async () => {
+                await loadCharacters({ limit: 100, page: 1 });
+                setShowCreate(false);
+              }}
+            />
       {/* Visualizer */}
       <ClashVisualizer
         result={clashResult}

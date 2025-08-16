@@ -37,6 +37,7 @@ const statusDot = (type = "") => {
 
 const GameCard = ({ char, selected, onClick, index, isAttacker, isDefender }) => {
   const characterId = char._id || char.id;
+  console.log(char)
 
   // Safe numbers
   const spMin = char?.speed?.min ?? 0;
