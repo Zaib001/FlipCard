@@ -1,20 +1,19 @@
+// src/components/cards/GameCard.jsx
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { fadeIn } from "../../animations/motion";
 
 // Prefer setting this in .env (Vite): VITE_API_BASE_URL="http://localhost:4000"
-// If you're on Next.js, swap to process.env.NEXT_PUBLIC_API_BASE_URL
 const API_BASE =
   import.meta?.env?.VITE_API_BASE_URL?.replace(/\/+$/, "") || "http://localhost:4000";
 
+/** Build a usable image URL from DB value */
 function buildImageUrl(img) {
   if (!img) return null;
-  // Absolute (http/https/data) — use as-is
+  // Absolute (http/https) or data: — use as-is
   if (/^(https?:)?\/\//i.test(img) || /^data:image\//i.test(img)) return img;
-  // If backend serves /uploads as static, keep leading slash; otherwise prefix
-  return img.startsWith("/")
-    ? `${API_BASE}${img}`
-    : `${API_BASE}/${img}`;
+  // Relative path → prefix with API base if needed
+  return img.startsWith("/") ? `${API_BASE}${img}` : `${API_BASE}/${img}`;
 }
 
 function clamp01(n) {
@@ -36,23 +35,24 @@ const statusDot = (type = "") => {
 };
 
 const GameCard = ({ char, selected, onClick, index, isAttacker, isDefender }) => {
-  const characterId = char._id || char.id;
-  console.log(char)
+  const characterId = char?._id || char?.id;
 
-  // Safe numbers
+  // ----- Safe numbers -----
   const spMin = char?.speed?.min ?? 0;
   const spMax = char?.speed?.max ?? 0;
-const spCur = (char?.speed?.current ?? Math.floor((spMin + spMax) / 2)) || 0;
+  // rolled speed if present; otherwise show midpoint; THEN fallback 0
+  const spCur = (char?.speed?.current ?? Math.floor((spMin + spMax) / 2)) || 0;
 
   const hpCur = char?.hp?.current ?? 0;
   const hpMax = char?.hp?.max ?? 0;
   const hpPct = useMemo(() => (hpMax > 0 ? clamp01(hpCur / hpMax) : 0), [hpCur, hpMax]);
 
-  // Image states
+  // ----- Image handling -----
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const imgSrc = useMemo(() => buildImageUrl(char?.image), [char?.image]);
 
+  // ----- Visual state -----
   const borderGlow = selected
     ? isAttacker
       ? "border-red-500/80 shadow-lg shadow-red-500/20"
@@ -64,6 +64,7 @@ const spCur = (char?.speed?.current ?? Math.floor((spMin + spMax) / 2)) || 0;
   const selectionPill =
     isAttacker ? "bg-red-500/90" : isDefender ? "bg-blue-500/90" : "bg-brand-accent/90";
 
+  // ----- Render -----
   return (
     <motion.div
       initial="hidden"
@@ -100,27 +101,31 @@ const spCur = (char?.speed?.current ?? Math.floor((spMin + spMax) / 2)) || 0;
           <h3 className="text-xl font-bold tracking-tight truncate">{char?.name ?? "Unknown"}</h3>
           <p className="text-xs opacity-70 mt-1 truncate">{char?.title || "Combatant"}</p>
         </div>
+
+        {/* Speed badge: shows range + rolled */}
         <div
-          className="flex items-center gap-1 bg-black/30 px-2 py-1 rounded-full"
-          title={`Speed: ${spCur}`}
+          className="flex items-center gap-2 bg-black/30 px-2 py-1 rounded-full"
+          title={`Speed range: ${spMin}-${spMax}${char?.speed?.current != null ? ` (rolled: ${char.speed.current})` : ""}`}
         >
           <span className="text-xs opacity-80">SPD</span>
-          <span className="font-bold">{spCur}</span>
+          <span className="font-bold">{spMin}-{spMax}</span>
+          {char?.speed?.current != null && (
+            <span className="text-[10px] opacity-70">(rolled: {char.speed.current})</span>
+          )}
         </div>
       </div>
 
-      {/* Image */}
-      <div className="relative w-full h-32 mb-4 rounded-lg overflow-hidden bg-white/5">
+      {/* Image (scaled to fit with fixed aspect ratio) */}
+      <div className="relative w-full aspect-[4/3] mb-4 rounded-lg overflow-hidden bg-white/5">
         {imgSrc && !imgError ? (
           <>
-            {/* shimmer while loading */}
             {!imgLoaded && (
               <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-white/5 via-white/10 to-white/5" />
             )}
             <img
               src={imgSrc}
               alt={char?.name ?? "Character"}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
                 imgLoaded ? "opacity-100" : "opacity-0"
               }`}
               loading="lazy"
@@ -129,15 +134,17 @@ const spCur = (char?.speed?.current ?? Math.floor((spMin + spMax) / 2)) || 0;
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-xs opacity-50">
+          <div className="absolute inset-0 w-full h-full grid place-items-center text-xs opacity-60">
             {/* Fallback placeholder */}
-            <svg width="36" height="36" viewBox="0 0 24 24" className="opacity-60">
-              <path
-                fill="currentColor"
-                d="M21 19V5a2 2 0 0 0-2-2H5C3.89 3 3 3.9 3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2m-2 0H5V5h14v14M8.5 13.5l2.5 3l3.5-4.5l4.5 6H5l3.5-4.5Z"
-              />
-            </svg>
-            <span className="ml-2">No Image</span>
+            <div className="flex items-center">
+              <svg width="36" height="36" viewBox="0 0 24 24" className="opacity-60">
+                <path
+                  fill="currentColor"
+                  d="M21 19V5a2 2 0 0 0-2-2H5C3.89 3 3 3.9 3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2m-2 0H5V5h14v14M8.5 13.5l2.5 3l3.5-4.5l4.5 6H5l3.5-4.5Z"
+                />
+              </svg>
+              <span className="ml-2">No Image</span>
+            </div>
           </div>
         )}
       </div>
@@ -170,7 +177,7 @@ const spCur = (char?.speed?.current ?? Math.floor((spMin + spMax) / 2)) || 0;
           <div className="text-cyan-300 font-bold">{char?.sanity ?? 0}</div>
         </div>
 
-        {/* Defense (optional in your schema) */}
+        {/* Defense (optional / placeholder) */}
         <div className="rounded-lg bg-black/20 p-2 border border-white/10">
           <div className="opacity-80 text-xs">Defense</div>
           <div className="text-purple-300 font-bold">{char?.defense ?? 0}</div>
