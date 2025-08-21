@@ -1,4 +1,3 @@
-// src/components/combat/ClashVisualizer.jsx
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -103,10 +102,10 @@ function TabButton({ id, active, onClick, children }) {
 
 /* ---------- Main ---------- */
 export default function ClashVisualizer({ result, onClose }) {
-  // 1) Call hooks unconditionally at the top (no early returns before hooks)
+  // Hooks: always called unconditionally to avoid hook-order bugs
   const [tab, setTab] = useState("clash"); // clash | damage | effects | log
 
-  // 2) Derive all values safely from possibly-null result
+  // Safe derivations from possibly-null result
   const mode = result?.mode;
   const winner = result?.winner;
   const loser = result?.loser;
@@ -137,7 +136,7 @@ export default function ClashVisualizer({ result, onClose }) {
     return "Combat Result";
   }, [mode]);
 
-  // 3) After hooks, we can early-return if there's nothing to render
+  // Early return after hooks → safe
   if (!result) return null;
 
   return (
@@ -268,7 +267,7 @@ export default function ClashVisualizer({ result, onClose }) {
                   {effects.immediate?.length ? (
                     <ul className="grid gap-2">
                       {effects.immediate.map((e, i) => (
-                        <li key={i} className="rounded border border-white/10 bg-black/20 px-2 py-1 text-sm flex items-center justify-between">
+                        <li key={`${e.type}-${i}`} className="rounded border border-white/10 bg-black/20 px-2 py-1 text-sm flex items-center justify-between">
                           <span className="opacity-90">{e.type}</span>
                           {"amount" in e ? <span className="font-semibold">-{e.amount} HP</span> : null}
                         </li>
@@ -283,7 +282,7 @@ export default function ClashVisualizer({ result, onClose }) {
                   {effects.scheduled?.length ? (
                     <ul className="grid gap-2">
                       {effects.scheduled.map((e, i) => (
-                        <li key={i} className="rounded border border-white/10 bg-black/20 px-2 py-1 text-sm flex items-center justify-between">
+                        <li key={`${e.type}:${e.potency ?? "np"}:${i}`} className="rounded border border-white/10 bg-black/20 px-2 py-1 text-sm flex items-center justify-between">
                           <span className="opacity-90">{e.type}</span>
                           <span className="text-xs opacity-70">
                             {e.potency != null ? `Potency ${e.potency}` : ""}
